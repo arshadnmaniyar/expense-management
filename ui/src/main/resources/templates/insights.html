@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Insights</title>
+</head>
+<body>
+    <h1>Financial Insights</h1>
+    <label for="userId">User ID:</label>
+    <input type="text" id="userId" required>
+    <button onclick="loadInsights()">Load Insights</button>
+    <div id="insights"></div>
+    <script>
+        async function loadInsights() {
+            const userId = document.getElementById('userId').value;
+            const response = await fetch(`http://localhost:8081/insights/${userId}`); // via gateway
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('insights').innerHTML = `
+                    <p>${data.insightText}</p>
+                    <p>Last refreshed: ${data.lastRefreshed}</p>
+                `;
+            } else {
+                document.getElementById('insights').innerHTML = 'No insights found';
+            }
+        }
+    </script>
+</body>
+</html>

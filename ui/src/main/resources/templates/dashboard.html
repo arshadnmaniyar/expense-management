@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Record Expense</h1>
+    <form id="expenseForm">
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" required><br>
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" step="0.01" required><br>
+        <label for="description">Description:</label>
+        <input type="text" id="description" required><br>
+        <label for="category">Category:</label>
+        <input type="text" id="category" required><br>
+        <label for="date">Date:</label>
+        <input type="date" id="date" required><br>
+        <button type="submit">Submit</button>
+    </form>
+    <script>
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                userId: document.getElementById('userId').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                description: document.getElementById('description').value,
+                category: document.getElementById('category').value,
+                date: document.getElementById('date').value
+            };
+            const response = await fetch('http://localhost:8081/expenses', { // via gateway
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                alert('Expense recorded');
+            } else {
+                alert('Error');
+            }
+        });
+    </script>
+</body>
+</html>
