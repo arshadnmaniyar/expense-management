@@ -1,53 +1,106 @@
 package org.example.expensecommand.domain;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
+
 
 @Entity
+@Table(name = "expense", schema = "expense_management", uniqueConstraints = {
+        @UniqueConstraint(name = "expense_transaction_id_key", columnNames = "transaction_id")})
+
 public class Expense {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "expense_id", nullable = false)
+    private UUID expenseId;
 
-    private String userId;
+    @Column(name = "transaction_id", nullable = false)
+    private UUID transactionId;
 
-    private BigDecimal amount;
+    @Column(name = "purchase_date", nullable = false)
+    private LocalDate purchaseDate;
 
-    private String description;
+    @Column(name = "total_amount", nullable = false)
+    private BigDecimal totalAmount;
 
-    private String category;
+    @Column(name = "store_id", nullable = false)
+    private UUID storeId;
 
-    private LocalDate date;
+    @Column(name = "payment_type_id", nullable = false)
+    private UUID paymentTypeId;
 
-    // Constructors, getters, setters
+//    @CreationTimestamp
+//    @Column(name = "created_ts")
+//    private LocalDateTime createdTs;
+//
+//    @UpdateTimestamp
+//    @Column(name = "updated_ts")
+//    private LocalDateTime updatedTs;
 
-    public Expense() {}
-
-    public Expense(String userId, BigDecimal amount, String description, String category, LocalDate date) {
-        this.userId = userId;
-        this.amount = amount;
-        this.description = description;
-        this.category = category;
-        this.date = date;
+    // Constructors
+    public Expense() {
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Expense(UUID expenseId, UUID transactionId, LocalDate purchaseDate, BigDecimal totalAmount, UUID storeId, UUID paymentTypeId) {
+        this.expenseId = expenseId;
+        this.transactionId = transactionId;
+        this.purchaseDate = purchaseDate;
+        this.totalAmount = totalAmount;
+        this.storeId = storeId;
+        this.paymentTypeId = paymentTypeId;
+    }
 
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
+    // Getters and Setters
 
-    public BigDecimal getAmount() { return amount; }
-    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public UUID getExpenseId() {
+        return expenseId;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public void setExpenseId(UUID expenseId) {
+        this.expenseId = expenseId;
+    }
 
-    public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
+    public UUID getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(UUID transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public LocalDate getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public void setPurchaseDate(LocalDate purchaseDate) {
+        this.purchaseDate = purchaseDate;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public UUID getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(UUID storeId) {
+        this.storeId = storeId;
+    }
+
+    public UUID getPaymentTypeId() {
+        return paymentTypeId;
+    }
+
+    public void setPaymentTypeId(UUID paymentTypeId) {
+        this.paymentTypeId = paymentTypeId;
+    }
 }
