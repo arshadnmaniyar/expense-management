@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO" monitorInterval="30">
+    <Properties>
+        <!-- Use Spring properties for configuration, with fallback to system env -->
+        <Property name="log.path">${spring:app.logging.path:-./logs}</Property>
+        <Property name="log.fileName">${log.path}/app.log</Property>
+        <Property name="error.fileName">${log.path}/error.log</Property>
+        <Property name="maxFileSize">${spring:app.logging.max-size:-50MB}</Property>
+        <Property name="maxHistory">${spring:app.logging.max-history:-30}</Property>
+        <Property name="log.format">${spring:app.logging.format:-text}</Property>
+        <Property name="log.format">${spring:app.logging.format:-text}</Property>
+        <Property name="service.name">${spring:spring.application.name:-expense-command}</Property>
+        <Property name="env">${spring:spring.profiles.active:-dev}</Property>
+        <Property name="pattern.main">%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1.} %X{traceId:-} %X{requestId:-} - %msg%n%ex</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Rolling file (human readable) - with createOnDemand to create logs dir -->
+        <RollingFile name="RollingFile"
+                     fileName="${log.fileName}"
+                     filePattern="${log.path}/app-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true"
+                     immediateFlush="false">
+            <PatternLayout pattern="${pattern.main}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="${maxFileSize}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${maxHistory}" compressionLevel="9"/>
+        </RollingFile>
+
+        <!-- Error Rolling file -->
+        <RollingFile name="ErrorFile"
+                     fileName="${error.fileName}"
+                     filePattern="${log.path}/error-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true"
+                     immediateFlush="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1.} [traceId: %X{traceId:-}] [requestId: %X{requestId:-}] - %msg%n%ex"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="${maxFileSize}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${maxHistory}" compressionLevel="9"/>
+        </RollingFile>
+
+        <!-- Console text layout -->
+        <Console name="ConsoleText" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1.} [traceId: %X{traceId:-}] [requestId: %X{requestId:-}] - %msg%n%ex"/>
+        </Console>
+
+        <!-- Console JSON layout (compact, one-line) -->
+        <Console name="ConsoleJson" target="SYSTEM_OUT">
+            <JsonLayout eventEol="true" compact="true" includeStacktrace="true" includeNullDelimiter="false">
+                <KeyValuePair key="service" value="${service.name}"/>
+                <KeyValuePair key="env" value="${env}"/>
+            </JsonLayout>
+        </Console>
+
+        <!-- Routing appender chooses console appender based on LOG_FORMAT -->
+        <Routing name="ConsoleRouter" >
+            <Routes pattern="${log.format}">
+                <Route key="json">
+                    <AppenderRef ref="ConsoleJson"/>
+                </Route>
+                <Route key="text">
+                    <AppenderRef ref="ConsoleText"/>
+                </Route>
+                <!-- default route if no match -->
+                <Route>
+                    <AppenderRef ref="ConsoleText"/>
+                </Route>
+            </Routes>
+        </Routing>
+
+        <!-- Async wrapper for file appender with error handling -->
+        <Async name="AsyncRolling" blocking="true">
+            <AppenderRef ref="RollingFile"/>
+        </Async>
+
+        <!-- Async wrapper for error file appender -->
+        <Async name="AsyncErrorRolling" blocking="true">
+            <AppenderRef ref="ErrorFile"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- Frameworks quieter -->
+        <Logger name="org.springframework" level="WARN" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+        </Logger>
+
+        <!-- Specific loggers for observability -->
+        <Logger name="org.example.expensecommand" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+        </Logger>
+
+        <!-- Request/Response logging - INFO level logs to file -->
+        <Logger name="org.example.expensecommand.logging.RequestResponseLoggingFilter" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+        </Logger>
+
+        <!-- Request Correlation logging -->
+        <Logger name="org.example.expensecommand.logging.RequestCorrelationFilter" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+        </Logger>
+
+        <!-- Exception Handler logs errors -->
+        <Logger name="org.example.expensecommand.exception.GlobalExceptionHandler" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+            <AppenderRef ref="AsyncErrorRolling" level="ERROR"/>
+        </Logger>
+
+        <!-- Custom Authentication Entry Point -->
+        <Logger name="org.example.expensecommand.security.CustomAuthenticationEntryPoint" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+            <AppenderRef ref="AsyncErrorRolling" level="ERROR"/>
+        </Logger>
+
+        <!-- Dedicated error logger -->
+        <Logger name="ErrorLogger" level="ERROR" additivity="false">
+            <AppenderRef ref="AsyncErrorRolling"/>
+            <AppenderRef ref="ConsoleRouter"/>
+        </Logger>
+
+        <!-- JWT validation logging -->
+        <Logger name="org.example.expensecommand.security.JwtValidationFilter" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+        </Logger>
+
+        <!-- Root logger captures everything else -->
+        <Root level="INFO">
+            <AppenderRef ref="ConsoleRouter"/>
+            <AppenderRef ref="AsyncRolling"/>
+        </Root>
+    </Loggers>
+</Configuration>

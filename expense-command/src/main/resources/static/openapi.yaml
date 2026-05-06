@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Expense API
+  version: 1.0.0
+  description: API to create expenses (OpenAPI-first, server stubs generated for Spring)
+servers:
+  - url: /api
+paths:
+  /expenses:
+    post:
+      summary: Create expense
+      operationId: createExpense
+      tags:
+        - Expenses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExpenseRequest'
+            examples:
+              example-1:
+                value:
+                  idempotencyKey: "1bab8580-866b-481f-a8a7-3d1bdfe2b243"
+                  userId: "1bab8580-866b-481f-a8a7-3d1bdfe2b243"
+                  purchaseDate: "2026-04-13"
+                  items:
+                    - itemName: "Rice"
+                      category: "Grocery"
+                      subCategory: "Grains"
+                      amount: 23.23
+                      quantity: "5"
+                      unit: "KGs"
+                      comments: ""
+                  store: "AAA"
+      responses:
+        '201':
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Bad request (validation or deserialization error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict (idempotency key duplicate or business conflict)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateExpenseRequest:
+      type: object
+      required:
+        - idempotencyKey
+        - userId
+        - purchaseDate
+        - items
+        - store
+      properties:
+        idempotencyKey:
+          type: string
+          description: Unique idempotency key for the request
+          example: "1bab8580-866b-481f-a8a7-3d1bdfe2b243"
+        userId:
+          type: string
+          format: uuid
+          description: UUID of the user
+          example: "1bab8580-866b-481f-a8a7-3d1bdfe2b243"
+        purchaseDate:
+          type: string
+          format: date
+          description: Purchase date in ISO format (YYYY-MM-DD)
+          example: "2026-04-13"
+        items:
+          type: array
+          description: List of purchased items
+          items:
+            $ref: '#/components/schemas/ExpenseItem'
+        store:
+          type: string
+          description: Store identifier or name
+          example: "AAA"
+
+    ExpenseItem:
+      type: object
+      required:
+        - itemName
+        - category
+        - amount
+        - quantity
+      properties:
+        itemName:
+          type: string
+          example: "Rice"
+        category:
+          type: string
+          example: "Grocery"
+        subCategory:
+          type: string
+          example: "Grains"
+        amount:
+          type: number
+          format: double
+          example: 23.23
+        quantity:
+          type: string
+          description: Quantity as provided by client; service will parse/validate numeric value
+          example: "5"
+        unit:
+          type: string
+          example: "KGs"
+        comments:
+          type: string
+          example: ""
+
+    TransactionResponse:
+      type: object
+      required:
+        - transactionId
+        - status
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Created transaction id
+        status:
+          type: string
+          description: Operation status
+          example: "CREATED"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Validation failed for field 'items[0].amount'"
+        details:
+          type: array
+          items:
+            type: string
+          description: Optional list of detailed error messages

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Properties>
+        <!-- Simple property definitions to avoid interpolation loops -->
+        <Property name="logDir">./logs</Property>
+        <Property name="logFileName">${logDir}/app.log</Property>
+        <Property name="errorFileName">${logDir}/error.log</Property>
+        <Property name="maxFileSize">50MB</Property>
+        <Property name="maxHistory">30</Property>
+        <!-- LOG_FORMAT: "text" (default) or "json" -->
+        <Property name="logFormat">text</Property>
+        <Property name="serviceName">expense-command</Property>
+        <Property name="env">dev</Property>
+        <Property name="pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1.} %X{traceId:-} %X{requestId:-} - %msg%n%ex</Property>
+    </Properties>
+
+     <Appenders>
+         <!-- Rolling file (human readable) - with createOnDemand to create logs dir -->
+         <RollingFile name="RollingFile"
+                      fileName="${logFileName}"
+                      filePattern="${logDir}/app-%d{yyyy-MM-dd}-%i.log.gz"
+                      createOnDemand="true"
+                      immediateFlush="false"
+                      ignoreExceptions="false">
+             <PatternLayout pattern="${pattern}"/>
+             <Policies>
+                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                 <SizeBasedTriggeringPolicy size="${maxFileSize}"/>
+             </Policies>
+             <DefaultRolloverStrategy max="${maxHistory}" compressionLevel="9"/>
+         </RollingFile>
+
+         <!-- Error log file (all errors) - separate file for errors -->
+         <RollingFile name="ErrorFile"
+                      fileName="${errorFileName}"
+                      filePattern="${logDir}/error-%d{yyyy-MM-dd}-%i.log.gz"
+                      createOnDemand="true"
+                      immediateFlush="false"
+                      ignoreExceptions="false">
+             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1.} [traceId: %X{traceId:-}, requestId: %X{requestId:-}] - %msg%n%ex"/>
+             <Policies>
+                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                 <SizeBasedTriggeringPolicy size="${maxFileSize}"/>
+             </Policies>
+             <DefaultRolloverStrategy max="${maxHistory}" compressionLevel="9"/>
+         </RollingFile>
+
+         <!-- Async wrapper for error file appender with blocking -->
+         <Async name="AsyncErrorFile" blocking="true">
+             <AppenderRef ref="ErrorFile"/>
+         </Async>
+
+         <!-- Console text layout -->
+         <Console name="ConsoleText" target="SYSTEM_OUT">
+             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %c{1.} [traceId: %X{traceId:-}] [requestId: %X{requestId:-}] - %msg%n%ex"/>
+         </Console>
+
+         <!-- Console JSON layout (compact, one-line) -->
+         <Console name="ConsoleJson" target="SYSTEM_OUT">
+             <JsonLayout eventEol="true" compact="true" includeStacktrace="true" includeNullDelimiter="false">
+                 <KeyValuePair key="service" value="${serviceName}"/>
+                 <KeyValuePair key="env" value="${env}"/>
+                 <KeyValuePair key="traceId" value="%X{traceId}"/>
+                 <KeyValuePair key="requestId" value="%X{requestId}"/>
+             </JsonLayout>
+         </Console>
+    </Appenders>
+
+     <Loggers>
+         <!-- Error logger - logs to error.log (all errors and warnings will be captured) -->
+         <Logger name="ErrorLogger" level="ERROR" additivity="false">
+             <AppenderRef ref="AsyncErrorFile"/>
+             <AppenderRef ref="ConsoleText"/>
+         </Logger>
+
+         <!-- Frameworks quieter -->
+         <Logger name="org.springframework" level="WARN" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+         </Logger>
+
+         <!-- Application package - logs everything -->
+         <Logger name="org.example.expensecommand" level="DEBUG" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+         </Logger>
+
+         <!-- Request/Response logging - captures all request flow -->
+         <Logger name="org.example.expensecommand.logging.RequestResponseLoggingFilter" level="DEBUG" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+         </Logger>
+
+         <!-- Request Correlation logging - captures trace IDs -->
+         <Logger name="org.example.expensecommand.logging.RequestCorrelationFilter" level="DEBUG" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+         </Logger>
+
+         <!-- Exception Handler - logs all exceptions -->
+         <Logger name="org.example.expensecommand.exception.GlobalExceptionHandler" level="DEBUG" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+             <AppenderRef ref="AsyncErrorFile" level="ERROR"/>
+         </Logger>
+
+         <!-- Custom Authentication Entry Point - logs auth failures -->
+         <Logger name="org.example.expensecommand.security.CustomAuthenticationEntryPoint" level="DEBUG" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+             <AppenderRef ref="AsyncErrorFile" level="ERROR"/>
+         </Logger>
+
+         <!-- JWT validation logging -->
+         <Logger name="org.example.expensecommand.security.JwtValidationFilter" level="DEBUG" additivity="false">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+         </Logger>
+
+         <!-- Root logger - catches everything else -->
+         <Root level="INFO">
+             <AppenderRef ref="ConsoleText"/>
+             <AppenderRef ref="AsyncRolling"/>
+         </Root>
+     </Loggers>
+</Configuration>

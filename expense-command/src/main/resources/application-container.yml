@@ -1,0 +1,90 @@
+#spring:
+#  profiles:
+#    active: container
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:expense_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      acks: all
+      retries: 3
+    consumer:
+      auto-offset-reset: earliest
+      group-id: expense-command-service
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+
+# Disable swagger UI by default in container
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    path: /v3/api-docs
+
+# Logging properties for container
+# Use JSON console output for ELK/Fluentd/Fluentbit collection
+logging:
+  config: classpath:log4j2.xml
+  level:
+    org:
+      springframework: WARN
+      springframework:
+        security: INFO
+
+app:
+  logging:
+    format: json
+    path: ${LOG_PATH:/tmp/logs}
+    max-size: 50MB
+    max-history: 7
+
+# Expose minimal actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    enable:
+      prometheus: true
+
+# Container security - JWT validation enabled
+jwt:
+  validation:
+    enabled: true
+  secret: ${JWT_SECRET:your-secret-key-change-in-production}
+  issuer: ${JWT_ISSUER:http://keycloak:8080/auth/realms/expense-management}
+
+# Service info
+spring:
+  application:
+    name: expense-command-service
+    version: 1.0.0
+

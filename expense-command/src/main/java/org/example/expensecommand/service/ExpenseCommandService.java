@@ -1,47 +1,59 @@
 package org.example.expensecommand.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.expensecommand.domain.*;
-import org.example.expensecommand.domain.TransactionType;
-import org.example.expensecommand.dto.CreateExpenseRequest;
-import org.example.expensecommand.event.ExpenseCreatedEvent;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.example.expensecommand.dto.CreateExpenseRequestDto;
+import org.example.expensecommand.dto.TransactionResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * ExpenseCommandService
+ *
+ * DDD Principle: Presentation/API Service
+ * - Delegates to application service
+ * - Handles request/response transformation
+ * - Returns transactional results
+ */
 @Service
 public class ExpenseCommandService {
 
-    private final TransactionRepository transactionRepository;
-    private final OutboxRepository outboxRepository;
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExpenseCommandService.class);
 
-    public ExpenseCommandService(TransactionRepository transactionRepository, OutboxRepository outboxRepository, KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
-        this.transactionRepository = transactionRepository;
-        this.outboxRepository = outboxRepository;
-        this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
+    private final CreateExpenseApplicationService createExpenseApplicationService;
+
+    public ExpenseCommandService(CreateExpenseApplicationService createExpenseApplicationService) {
+        this.createExpenseApplicationService = createExpenseApplicationService;
     }
 
+    /**
+     * Create expense command endpoint handler
+     *
+     * @param request CreateExpenseRequestDto
+     * @return TransactionResult with created transaction ID
+     */
     @Transactional
-    public Transaction createExpense(CreateExpenseRequest request) {
-        Transaction transaction = new Transaction(UUID.randomUUID(), request.getIdempotencyKey(), request.getDate(), TransactionType.EXPENSE, request.getUserId());
-        transaction = transactionRepository.save(transaction);
+    public TransactionResult createExpense(CreateExpenseRequestDto request) {
+        LOGGER.info("ExpenseCommandService.createExpense: userId={}, purchaseDate={}",
+                request.getUserId(), request.getPurchaseDate());
 
-        ExpenseCreatedEvent event = new ExpenseCreatedEvent(transaction.getTransactionId().toString(), request.getUserId(), request.getDate());
         try {
-            String payload = objectMapper.writeValueAsString(event);
-            Outbox outbox = new Outbox("ExpenseCreated", payload);
-            outboxRepository.save(outbox);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize event", e);
-        }
+            // Delegate to application service
+            UUID transactionId = createExpenseApplicationService.executeCreateExpense(request);
 
-        return transaction;
+            // Build response
+            TransactionResult result = new TransactionResult();
+            result.setTransactionId(transactionId);
+            result.setStatus("S01");
+
+            LOGGER.info("ExpenseCommandService.createExpense completed successfully: transactionId={}", transactionId);
+            return result;
+
+        } catch (Exception e) {
+            LOGGER.error("Error in ExpenseCommandService.createExpense: userId={}", request.getUserId(), e);
+            throw e;
+        }
     }
 }

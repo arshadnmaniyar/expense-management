@@ -1,4 +1,4 @@
-package org.example.expensecommand.domain;
+package org.example.expensecommand.domain.Transaction;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

@@ -1,29 +1,22 @@
 spring:
+  application:
+    name: expense-command-service
+    version: 1.0.0
+
+  profiles:
+    active: dev
+    include: dev
+
+  # Default datasource configuration (will be overridden by profile)
   datasource:
-#    hikari:
-#      auto-commit: false
     url: jdbc:postgresql://localhost:5432/pgsvc
     username: pgsvc
     password: pgsvc@123
+
   jpa:
-#    properties:
-#      hibernate:
-#        connection:
-#          provider_disables_autocommit: true
     hibernate:
       ddl-auto: update
-#  kafka:
-#    bootstrap-servers: localhost:9092
+    open-in-view: false
 
 server:
   port: 8082
-
----
-spring:
-  config:
-    activate:
-      on-profile: docker
-  datasource:
-    url: jdbc:postgresql://postgres:5432/expense_db
-#  kafka:
-#    bootstrap-servers: kafka:9092

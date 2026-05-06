@@ -1,14 +1,15 @@
-package org.example.expensecommand.domain;
+package org.example.expensecommand.domain.store;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "store")
+@Table(name = "store", schema = "expense_management")
 public class Store {
 
     @Id
+    @GeneratedValue
     @Column(name = "store_id", nullable = false)
     private UUID storeId;
 

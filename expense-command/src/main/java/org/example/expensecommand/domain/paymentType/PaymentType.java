@@ -1,4 +1,4 @@
-package org.example.expensecommand.domain;
+package org.example.expensecommand.domain.paymentType;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

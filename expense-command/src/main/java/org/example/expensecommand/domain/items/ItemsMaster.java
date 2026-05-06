@@ -1,22 +1,25 @@
-package org.example.expensecommand.domain;
+package org.example.expensecommand.domain.items;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "category")
-public class Category {
+@Table(name = "items_master", schema = "expense_management")
+public class ItemsMaster {
 
     @Id
+    @Column(name = "item_master_id", nullable = false)
+    private UUID itemMasterId;
+
+    @Column(name = "item_name", nullable = false)
+    private String itemName;
+
     @Column(name = "category_id", nullable = false)
     private UUID categoryId;
 
-    @Column(name = "category_name", nullable = false)
-    private String categoryName;
-
-    @Column(name = "parent_category_id")
-    private UUID parentCategoryId;
+    @Column(name = "active_in")
+    private String activeIn;
 
     @Column(name = "created_ts", nullable = false)
     private LocalDateTime createdTs;
@@ -24,12 +27,13 @@ public class Category {
     @Column(name = "updated_ts", nullable = false)
     private LocalDateTime updatedTs;
 
-    public Category() {}
+    public ItemsMaster() {}
 
-    public Category(UUID categoryId, String categoryName, UUID parentCategoryId) {
+    public ItemsMaster(UUID itemMasterId, String itemName, UUID categoryId, String activeIn) {
+        this.itemMasterId = itemMasterId;
+        this.itemName = itemName;
         this.categoryId = categoryId;
-        this.categoryName = categoryName;
-        this.parentCategoryId = parentCategoryId;
+        this.activeIn = activeIn;
     }
 
     @PrePersist
@@ -45,14 +49,17 @@ public class Category {
     }
 
     // getters and setters
+    public UUID getItemMasterId() { return itemMasterId; }
+    public void setItemMasterId(UUID itemMasterId) { this.itemMasterId = itemMasterId; }
+
+    public String getItemName() { return itemName; }
+    public void setItemName(String itemName) { this.itemName = itemName; }
+
     public UUID getCategoryId() { return categoryId; }
     public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
 
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
-    public UUID getParentCategoryId() { return parentCategoryId; }
-    public void setParentCategoryId(UUID parentCategoryId) { this.parentCategoryId = parentCategoryId; }
+    public String getActiveIn() { return activeIn; }
+    public void setActiveIn(String activeIn) { this.activeIn = activeIn; }
 
     public LocalDateTime getCreatedTs() { return createdTs; }
     public void setCreatedTs(LocalDateTime createdTs) { this.createdTs = createdTs; }
