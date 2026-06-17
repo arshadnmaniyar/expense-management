@@ -22,7 +22,7 @@ public class OutboxProcessor {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Scheduled(fixedDelay = 5000) // every 5 seconds
+    @Scheduled(fixedDelay = 60000) // every 1 minutes
     @Transactional
     public void processOutbox() {
         LOGGER.info("Entering processOutbox: Checking for unprocessed outbox messages.");
@@ -37,14 +37,14 @@ public class OutboxProcessor {
         LOGGER.info("Found {} unprocessed outbox messages.", outboxes.size());
 
         for (Outbox outbox : outboxes) {
-            LOGGER.debug("Processing outbox message with ID: {} and EventType: {}", outbox.getId(), outbox.getEventType());
+            LOGGER.debug("Processing outbox message with ID: {} and EventType: {}", outbox.getOutboxId(), outbox.getEventType());
             try {
                 kafkaTemplate.send("expense-events", outbox.getEventType(), outbox.getPayload());
                 outbox.setProcessed(true);
                 outboxRepository.save(outbox);
-                LOGGER.debug("Successfully processed and marked as sent outbox message with ID: {}", outbox.getId());
+                LOGGER.debug("Successfully processed and marked as sent outbox message with ID: {}", outbox.getOutboxId());
             } catch (Exception e) {
-                LOGGER.error("Failed to process outbox message with ID: {}. Error: {}", outbox.getId(), e.getMessage(), e);
+                LOGGER.error("Failed to process outbox message with ID: {}. Error: {}", outbox.getOutboxId(), e.getMessage(), e);
                 // Depending on requirements, you might want to mark it as failed or retry later
             }
         }

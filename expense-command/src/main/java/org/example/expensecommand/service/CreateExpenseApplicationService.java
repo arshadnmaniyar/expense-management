@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -124,12 +125,17 @@ public class CreateExpenseApplicationService {
             }
 
             // Step 5: Record integration event in Outbox
-            //publishExpenseCreatedEvent(transaction);
+            publishExpenseCreatedEvent(transaction,objectMapper.writeValueAsString(request));
 
             LOGGER.info("CreateExpenseApplicationService completed successfully. TransactionId: {}", transactionId);
             return transactionId;
 
-        } catch (Exception e) {
+        }
+        catch (JsonProcessingException jpe) {
+            LOGGER.error("Error serializing CreateExpenseRequestDto for userId: {}", request.getUserId(), jpe);
+            throw new RuntimeException("Failed to serialize expense event payload", jpe);
+        }
+        catch (Exception e) {
             LOGGER.error("Error in CreateExpenseApplicationService for userId: {}", request.getUserId(), e);
             throw e;
         }
@@ -185,14 +191,14 @@ public class CreateExpenseApplicationService {
      *
      * @param transaction Transaction entity
      */
-    private void publishExpenseCreatedEvent(Transaction transaction) {
+    private void publishExpenseCreatedEvent(Transaction transaction, String requestBody) {
         try {
             ExpenseCreatedEvent event = new ExpenseCreatedEvent(
                     transaction.getTransactionId().toString(),
-                    transaction.getUserId(),
-                    transaction.getTransactionDate()
+                    transaction.getTransactionDate(),
+                    requestBody
             );
-
+            
             String payload = objectMapper.writeValueAsString(event);
             Outbox outbox = new Outbox("ExpenseCreated", payload);
             outboxRepository.save(outbox);
