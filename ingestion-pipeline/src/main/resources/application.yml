@@ -1,0 +1,156 @@
+spring:
+  application:
+    name: ingestion-pipeline
+  datasource:
+    url: jdbc:postgresql://localhost:5432/expense_db
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: ingestion-pipeline
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 100
+
+# Embedding generation configuration
+embedding:
+  ollama:
+    base-url: http://localhost:11434
+  model: nomic-embed-text
+  timeout-seconds: 30
+
+# Resilience4j retry configuration
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 1000
+        retry-exceptions:
+          - java.lang.RuntimeException
+          - java.util.concurrent.TimeoutException
+    instances:
+      expenseIngestion:
+        base-config: default
+
+# Server configuration
+server:
+  port: 8084
+  servlet:
+    context-path: /
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Logging configuration
+logging:
+  level:
+    org.example.ingestionpipeline: DEBUG
+    org.springframework.kafka: INFO
+    org.springframework.data: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: container
+  application:
+    name: ingestion-pipeline
+  datasource:
+    url: jdbc:postgresql://postgres:5432/expense_db
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: redis
+      port: 6379
+  kafka:
+    bootstrap-servers: kafka:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: ingestion-pipeline
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 100
+
+# Embedding generation configuration
+embedding:
+  ollama:
+    base-url: http://ollama:11434
+  model: nomic-embed-text
+  timeout-seconds: 30
+
+# Resilience4j retry configuration
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 1000
+        retry-exceptions:
+          - java.lang.RuntimeException
+          - java.util.concurrent.TimeoutException
+    instances:
+      expenseIngestion:
+        base-config: default
+
+# Server configuration
+server:
+  port: 8084
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Logging configuration
+logging:
+  level:
+    org.example.ingestionpipeline: INFO
+    org.springframework.kafka: INFO

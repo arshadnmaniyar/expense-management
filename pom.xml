@@ -25,7 +25,7 @@
         <module>api-gateway</module>
         <module>expense-command</module>
         <module>ai-worker</module>
-        <module>insight-query</module>
+        <module>ingestion-pipeline</module>
         <module>ui</module>
     </modules>
 
