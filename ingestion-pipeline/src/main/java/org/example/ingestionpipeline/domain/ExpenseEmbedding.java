@@ -4,6 +4,8 @@ import lombok.*;
 import com.pgvector.PGvector;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
+import org.example.ingestionpipeline.config.hibernate.PGvectorType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,7 +25,7 @@ import java.util.UUID;
  * - Embedding model versioning: supports model updates and compatibility
  */
 @Entity
-@Table(name = "expense_embeddings", schema = "expense_management")
+@Table(name = "expense_embeddings", schema = "expense_db")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,11 +50,14 @@ public class ExpenseEmbedding {
     private LocalDate expenseDate;
 
     // Expense context for filtering and metadata
-    @Column(name = "store_name", length = 255)
+    @Column(name = "store_name", length = 500)
     private String storeName;
 
-    @Column(name = "category", length = 100)
+    @Column(name = "category", length = 200)
     private String category;
+
+    @Column(name = "sub_category", length = 200)
+    private String subCategory;
 
     // Numerical value for range queries and analytics
     @Column(name = "amount", precision = 19, scale = 2)
@@ -63,6 +68,7 @@ public class ExpenseEmbedding {
     private String embeddingText;
 
     // The vector itself - stored as pgvector type
+    @Type(PGvectorType.class)
     @Column(name = "embedding_vector", nullable = false, columnDefinition = "vector")
     private PGvector embeddingVector;
 
@@ -112,4 +118,3 @@ public class ExpenseEmbedding {
                 .build();
     }
 }
-
