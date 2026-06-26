@@ -46,7 +46,7 @@ public class ExpenseEventConsumer {
             dltStrategy = DltStrategy.FAIL_ON_ERROR
     )
     @KafkaListener(
-            topics = "expense-events",
+            topics = "expense-created",
             groupId = "ingestion-pipeline",
             containerFactory = "kafkaListenerContainerFactory"
     )
