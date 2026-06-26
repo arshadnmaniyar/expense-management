@@ -39,7 +39,7 @@ public class OutboxProcessor {
         for (Outbox outbox : outboxes) {
             LOGGER.debug("Processing outbox message with ID: {} and EventType: {}", outbox.getOutboxId(), outbox.getEventType());
             try {
-                kafkaTemplate.send("expense-events", outbox.getEventType(), outbox.getPayload());
+                kafkaTemplate.send("expense-created", outbox.getEventType(), outbox.getPayload());
                 outbox.setProcessed(true);
                 outboxRepository.save(outbox);
                 LOGGER.debug("Successfully processed and marked as sent outbox message with ID: {}", outbox.getOutboxId());
