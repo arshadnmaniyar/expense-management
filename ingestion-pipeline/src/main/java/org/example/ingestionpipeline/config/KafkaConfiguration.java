@@ -45,7 +45,23 @@ public class KafkaConfiguration {
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> consumerProps = new HashMap<>(kafkaProperties.getProperties());
+        // Add bootstrap servers
+        consumerProps.put("bootstrap.servers", kafkaProperties.getBootstrapServers());
+
+        // Add common properties
+        consumerProps.putAll(kafkaProperties.getProperties());
+
+        //Add consumer specific properties
         consumerProps.putAll(kafkaProperties.getConsumer().getProperties());
+
+        // Explicitly set deserializers from KafkaProperties
+        if (kafkaProperties.getConsumer().getKeyDeserializer() != null) {
+            consumerProps.put("key.deserializer", kafkaProperties.getConsumer().getKeyDeserializer());
+        }
+        if (kafkaProperties.getConsumer().getValueDeserializer() != null) {
+            consumerProps.put("value.deserializer", kafkaProperties.getConsumer().getValueDeserializer());
+        }
+
         return new DefaultKafkaConsumerFactory<>(consumerProps);
     }
 
@@ -78,7 +94,24 @@ public class KafkaConfiguration {
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> producerProps = new HashMap<>(kafkaProperties.getProperties());
+
+        // Add bootstrap servers
+        producerProps.put("bootstrap.servers", kafkaProperties.getBootstrapServers());
+
+        // Add common properties
+        producerProps.putAll(kafkaProperties.getProperties());
+
+        //Add producer-specific properties
         producerProps.putAll(kafkaProperties.getProducer().getProperties());
+
+        // Explicitly set deserializers from KafkaProperties
+        if (kafkaProperties.getProducer().getKeySerializer() != null) {
+            producerProps.put("key.serializer", kafkaProperties.getProducer().getKeySerializer());
+        }
+        if (kafkaProperties.getProducer().getValueSerializer() != null) {
+            producerProps.put("value.deserializer", kafkaProperties.getProducer().getValueSerializer());
+        }
+
         return new DefaultKafkaProducerFactory<>(producerProps);
     }
 
